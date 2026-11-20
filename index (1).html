@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#000000">
+<title>TechTok VPN</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#000;--fg:#fff;--mute:#9a9a9a;--line:#262626;--card:#0d0d0d;--ok:#5fe08a;--ease:cubic-bezier(.22,1,.36,1);--spring:cubic-bezier(.34,1.56,.64,1);box-sizing:border-box}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 16px/1.5 Manrope,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;overflow:hidden}
+header{position:fixed;top:0;left:0;right:0;z-index:5;background:var(--bg);padding:calc(env(safe-area-inset-top,0px) + 12px) 20px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line)}
+header .ghost{width:30px;height:auto}
+header b{font-weight:800;font-size:18px;letter-spacing:-.01em}
+.view{position:fixed;left:0;right:0;top:var(--hh,64px);bottom:var(--nh,84px);overflow-y:auto;overscroll-behavior:contain}
+section{display:none;padding:20px max(20px,calc((100vw - 640px)/2)) 32px}
+section.on{display:block;animation:sIn .4s var(--ease)}
+@keyframes sIn{from{opacity:0;transform:translateY(14px)}}
+@keyframes up{from{opacity:0;transform:translateY(22px) scale(.97)}}
+section.on .rise{animation:up .65s var(--ease) both;animation-delay:calc(var(--i,0)*80ms)}
+
+/* приведение */
+.ghost{display:block;overflow:visible;color:var(--fg);animation:float 4.2s ease-in-out infinite}
+.ghost path{fill:currentColor}
+.ghost .eyes{transform:translate(var(--ex,0px),var(--ey,0px));transition:transform .18s ease-out}
+.ghost .eye{fill:var(--eye,#000);transform-box:fill-box;transform-origin:center;animation:blink 5s infinite}
+@keyframes float{50%{transform:translateY(-6px) rotate(-1.5deg)}}
+@keyframes blink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+
+h1{font-weight:800;font-size:clamp(34px,10vw,52px);line-height:1.04;letter-spacing:-.03em;margin:8px 0 12px}
+h2{font-size:20px;font-weight:800;margin:0 0 14px;letter-spacing:-.01em}
+.lead{color:var(--mute);margin:0 0 28px;max-width:36ch}
+.plans{display:grid;gap:14px}
+@media(min-width:560px){.plans{grid-template-columns:1fr 1fr}}
+.card{border:1px solid var(--line);background:var(--card);border-radius:20px;padding:22px}
+
+/* карточки тарифов */
+.plan{position:relative;overflow:hidden;display:flex;flex-direction:column;padding:26px 24px;border-radius:26px;transition:transform .35s var(--spring),border-color .3s}
+.plan::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 80% at 100% 0,rgba(255,255,255,.08),transparent 60%);pointer-events:none}
+.plan>*{position:relative}
+.plan:hover{transform:translateY(-4px)}
+.plan:active{transform:scale(.985)}
+.plan.main{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.plan.main::before{background:radial-gradient(120% 80% at 100% 0,rgba(0,0,0,.07),transparent 60%)}
+.plan .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.plan h3{margin:0;font-size:17px;font-weight:600}
+.tag,.chip{border-radius:99px;padding:4px 11px;font-size:12px;font-weight:600}
+.tag{background:#000;color:#fff;position:relative;overflow:hidden}
+.tag::after{content:"";position:absolute;top:0;bottom:0;left:-60%;width:40%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);animation:shine 3.2s ease-in-out infinite}
+@keyframes shine{0%,55%{transform:translateX(0)}100%{transform:translateX(480%)}}
+.chip{border:1px solid var(--line);color:var(--mute)}
+.price{display:flex;align-items:baseline;gap:8px;font-weight:800;font-size:64px;letter-spacing:-.04em;line-height:1}
+.price small{font-size:15px;font-weight:600;letter-spacing:0;opacity:.55}
+.perk{margin:10px 0 0;font-size:14px;font-weight:600;opacity:.6}
+.plan ul{list-style:none;margin:18px 0 24px;padding:0;display:grid;gap:9px;font-size:15px}
+.plan li{display:flex;align-items:center;gap:10px}
+.plan li::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.45}
+.plan button{margin-top:auto}
+.wm{position:absolute!important;right:-26px;bottom:-34px;width:190px;height:auto;color:rgba(0,0,0,.07);--eye:#fff;pointer-events:none;animation-duration:6s}
+
+button,.btn{font:600 16px Manrope,sans-serif;cursor:pointer;border-radius:14px;padding:14px 18px;border:1px solid var(--fg);background:var(--fg);color:var(--bg);text-align:center;text-decoration:none;display:block;width:100%;transition:transform .25s var(--spring),opacity .2s,background .2s}
+button:active,.btn:active{transform:scale(.96)}
+button:disabled{opacity:.5}
+.plan.main button{background:var(--bg);color:var(--fg);border-color:var(--bg)}
+button.ghostb,.btn.ghostb{background:transparent;color:var(--fg);border-color:var(--line)}
+button:focus-visible,a:focus-visible{outline:3px solid #7aa7ff;outline-offset:3px}
+.tg-btn{display:flex;align-items:center;justify-content:center;gap:10px;background:#2aabee;border-color:#2aabee;color:#fff}
+.tg-btn svg{width:22px;height:22px;fill:#fff}
+
+.row{display:flex;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row span:first-child{color:var(--mute)}
+.badge{display:inline-flex;align-items:center;gap:8px;font-weight:600}
+.dot{width:10px;height:10px;border-radius:50%;background:#555}
+.on-dot{background:var(--ok);animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(95,224,138,.6)}70%,100%{box-shadow:0 0 0 10px rgba(95,224,138,0)}}
+.bar{height:6px;background:var(--line);border-radius:6px;overflow:hidden;margin:14px 0 4px}
+.bar i{display:block;height:100%;width:100%;background:var(--fg);transform-origin:left;transform:scaleX(var(--p,0));transition:transform 1.1s var(--ease)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px;word-break:break-all}
+.copy{display:flex;gap:10px;margin-top:12px;align-items:stretch}
+.copy .mono{flex:1;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.copy button{width:auto;padding:12px 16px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.stats b{display:block;font-size:34px;font-weight:800;letter-spacing:-.02em}
+.stats span,.muted{color:var(--mute);font-size:14px}
+
+/* рефералка */
+.hero-ref{text-align:center;padding:28px 22px;position:relative;overflow:hidden}
+.hero-ref .ghost{width:84px;margin:0 auto 12px}
+.hero-ref h3{margin:0 0 6px;font-size:22px;font-weight:800;letter-spacing:-.02em}
+.hero-ref p{margin:0 auto 18px;color:var(--mute);max-width:30ch}
+.bonus{display:inline-block;font-weight:800;font-size:15px;border:1px solid var(--line);border-radius:99px;padding:5px 14px;margin-bottom:14px}
+.reveal{animation:pop .6s var(--spring) both}
+@keyframes pop{from{opacity:0;transform:scale(.85) translateY(10px)}}
+.steps{display:grid;gap:10px;margin-top:12px}
+.step{display:flex;gap:14px;align-items:center}
+.step i{flex:0 0 34px;height:34px;border-radius:50%;background:#1a1a1a;border:1px solid var(--line);display:grid;place-items:center;font-style:normal;font-weight:800}
+.dots::after{content:"";animation:dots 1s steps(4) infinite}
+@keyframes dots{0%{content:""}25%{content:"."}50%{content:".."}75%,100%{content:"..."}}
+
+nav{position:fixed;left:0;right:0;bottom:0;z-index:5;background:#0f0f0f;border-top:1px solid #262626;border-radius:26px 26px 0 0;box-shadow:0 -14px 32px rgba(0,0,0,.7);padding:10px 12px calc(env(safe-area-inset-bottom,0px) + 10px)}
+nav div{max-width:520px;margin:0 auto;position:relative;display:grid;grid-template-columns:repeat(4,1fr)}
+nav a{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;color:var(--mute);text-decoration:none;font-size:12px;font-weight:600;transition:color .25s}
+.pill{position:absolute;top:0;bottom:0;left:0;width:25%;padding:0 3px;transition:transform .5s var(--spring);will-change:transform}
+.pill i{display:block;height:100%;border-radius:18px;background:#242424}
+nav a svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .45s var(--spring)}
+nav a.on{color:var(--fg)}
+nav a.on svg{transform:translateY(-2px) scale(1.12)}
+
+.sheet{position:fixed;inset:0;z-index:10;background:rgba(0,0,0,.7);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.sheet.open{opacity:1;pointer-events:auto}
+.sheet>div{background:#111;border:1px solid var(--line);border-radius:24px 24px 0 0;width:100%;max-width:640px;padding:24px 20px calc(env(safe-area-inset-bottom,0px) + 24px);transform:translateY(40px);transition:transform .45s var(--spring)}
+.sheet.open>div{transform:none}
+.sheet h2{margin-bottom:4px}
+.sheet .ghost{width:64px;margin:0 auto 10px}
+.methods{display:grid;gap:10px;margin:18px 0}
+.methods label{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;transition:border-color .2s,background .2s}
+.methods label:has(input:checked){border-color:var(--fg);background:#161616}
+.methods input{accent-color:#fff;width:18px;height:18px}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 96px);transform:translate(-50%,16px) scale(.9);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:14px;z-index:30;opacity:0;pointer-events:none;transition:opacity .2s,transform .4s var(--spring)}
+.toast.show{opacity:1;transform:translate(-50%,0) scale(1)}
+.conf{position:fixed;width:8px;height:8px;border-radius:2px;z-index:40;pointer-events:none}
+
+/* заставка */
+#splash{position:fixed;inset:0;z-index:100;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;transition:opacity .6s ease;cursor:pointer}
+#splash.out{opacity:0;pointer-events:none}
+#splash .glow{position:absolute;width:260px;height:260px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.18),transparent);animation:glow 2.4s ease-in-out infinite}
+@keyframes glow{50%{transform:scale(1.25);opacity:.6}}
+#splash .ghost{width:150px;position:relative;animation:enter .9s var(--spring) both,float 4s ease-in-out .9s infinite}
+@keyframes enter{from{opacity:0;transform:scale(.3) rotate(-14deg) translateY(40px)}}
+#splash b{position:relative;font-weight:800;font-size:26px;letter-spacing:-.02em;display:flex}
+#splash b span{display:inline-block;animation:up .6s var(--ease) both;animation-delay:calc(.55s + var(--k)*45ms)}
+
+.ghost.hop{animation:hop .65s var(--spring)!important}
+@keyframes hop{0%{transform:translateY(0) scale(1)}30%{transform:translateY(-22px) scale(.94,1.08) rotate(-6deg)}60%{transform:translateY(0) scale(1.08,.92)}100%{transform:none}}
+.faq{margin-top:26px;display:grid;gap:10px}
+.faq h2{margin-bottom:4px}
+.faq details{border:1px solid var(--line);background:var(--card);border-radius:16px;padding:0 18px;transition:border-color .25s,background .25s}
+.faq details[open]{border-color:#3a3a3a;background:#121212}
+.faq summary{list-style:none;cursor:pointer;padding:15px 0;font-weight:600;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-size:22px;line-height:1;color:var(--mute);transition:transform .35s var(--spring)}
+.faq details[open] summary::after{transform:rotate(135deg)}
+.faq details p{margin:0;padding:0 0 16px;color:var(--mute);font-size:15px;animation:sIn .35s var(--ease)}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+</style>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+
+<div id="splash" aria-hidden="true"><div class="glow"></div><div data-ghost></div><b id="splash-t"></b></div>
+
+<header>
+<div data-ghost style="width:30px"></div>
+<b>TechTok VPN</b>
+</header>
+
+<main class="view" id="view">
+
+<section id="subs" class="on">
+<h1 class="rise" style="--i:0">VPN без лишнего.</h1>
+<p class="lead rise" style="--i:1">Выбери тариф, оплати и подключайся.</p>
+<div class="plans">
+<article class="card plan rise" style="--i:2">
+<div class="top"><h3>На день</h3><span class="chip">24 часа</span></div>
+<div class="price">10<small>₽ / день</small></div>
+<p class="perk">Попробовать без обязательств</p>
+<ul><li>Доступ на 24 часа</li><li>Ключ сразу после оплаты</li></ul>
+<button class="ghostb" data-plan="day">Оформить за 10 ₽</button>
+</article>
+<article class="card plan main rise" style="--i:3">
+<div class="wm" data-ghost></div>
+<div class="top"><h3>На месяц</h3><span class="tag">Выгодно</span></div>
+<div class="price">50<small>₽ / месяц</small></div>
+<p class="perk">≈ 1,7 ₽ в день · экономия 250 ₽</p>
+<ul><li>Доступ на 30 дней</li><li>Ключ сразу после оплаты</li></ul>
+<button data-plan="month">Оформить за 50 ₽</button>
+</article>
+</div>
+<div class="faq rise" style="--i:4">
+<h2>Вопросы</h2>
+<details><summary>Как получить ключ?</summary><p>Ключ появится сразу после оплаты во вкладке «Статус». Его можно скопировать одной кнопкой.</p></details>
+<details><summary>Можно ли продлить подписку?</summary><p>Да. Новый срок прибавляется к текущему, ничего не сгорает.</p></details>
+<details><summary>Как работают бонусы за друзей?</summary><p>Во вкладке «Реф» создай ссылку. Когда друг что-то купит, тебе добавится 3 дня.</p></details>
+<details><summary>Что-то не работает</summary><p>Напиши в Telegram: @TechTokVpnBot. Кнопка поддержки есть во вкладке «Аккаунт».</p></details>
+</div>
+</section>
+
+<section id="status">
+<h2 class="rise" style="--i:0">Статус</h2>
+<div class="card rise" style="--i:1">
+<div class="badge"><i class="dot" id="sdot"></i><span id="stext">Нет подписки</span></div>
+<div class="bar"><i id="sbar"></i></div>
+<div class="muted" id="sleft">Оформи подписку, чтобы подключиться.</div>
+</div>
+<div class="card rise" style="margin-top:12px;--i:2">
+<div class="row"><span>Тариф</span><span id="splan">—</span></div>
+<div class="row"><span>Действует до</span><span id="suntil">—</span></div>
+</div>
+<div class="card rise" id="keybox" style="margin-top:12px;--i:3" hidden>
+<h2 style="font-size:16px;margin-bottom:0">Ключ подключения</h2>
+<div class="copy"><div class="mono" id="keyval"></div><button class="ghostb" data-copy="keyval">Копировать</button></div>
+</div>
+<button class="rise" style="margin-top:16px;--i:4" id="renew">Оформить подписку</button>
+</section>
+
+<section id="account">
+<h2 class="rise" style="--i:0">Аккаунт</h2>
+<div class="card rise" id="acc-out" style="--i:1;text-align:center">
+<div data-ghost style="width:72px;margin:0 auto 10px"></div>
+<h3 style="margin:0 0 6px;font-size:20px">Войди через Telegram</h3>
+<p class="muted" style="margin:0 0 16px">Аккаунт нужен, чтобы оплатить и сохранить подписку на всех устройствах.</p>
+<div data-login></div>
+</div>
+<div class="card rise" id="acc-in" style="--i:1" hidden>
+<div class="row"><span>Имя</span><span id="uname"></span></div>
+<div class="row"><span>Telegram</span><span id="utg"></span></div>
+<div class="row"><span>ID</span><span class="mono" id="uid"></span></div>
+</div>
+<h2 class="rise" style="margin-top:28px;--i:2">Платежи</h2>
+<div class="card rise" id="pay-list" style="--i:3"><div class="muted">Платежей пока нет.</div></div>
+<a class="btn ghostb rise" style="margin-top:16px;--i:4" href="https://t.me/TechTokVpnBot" rel="noopener">Поддержка в Telegram</a>
+<button class="ghostb rise" style="margin-top:10px;--i:5" id="logout" hidden>Выйти</button>
+</section>
+
+<section id="ref">
+<h2 class="rise" style="--i:0">Рефералы</h2>
+<div class="card hero-ref rise" style="--i:1">
+<div data-ghost></div>
+<span class="bonus">+3 дня за друга</span>
+<h3>Позови друга — получи дни</h3>
+<p>Когда приглашённый что-то купит, тебе начислится 3 бонусных дня.</p>
+<button id="gen">Сгенерировать ссылку</button>
+<div id="refbox" hidden>
+<div class="muted" style="text-align:left">Твоя ссылка</div>
+<div class="copy"><div class="mono" id="reflink" style="text-align:left"></div><button class="ghostb" data-copy="reflink">Копировать</button></div>
+<button class="ghostb" style="margin-top:10px" id="share">Поделиться</button>
+</div>
+</div>
+<div class="stats">
+<div class="card rise" style="--i:2"><b id="rinv">0</b><span>приглашено</span></div>
+<div class="card rise" style="--i:3"><b id="rbonus">0</b><span>дней получено</span></div>
+</div>
+<div class="card steps rise" style="--i:4">
+<div class="step"><i>1</i><span>Сгенерируй ссылку и отправь другу</span></div>
+<div class="step"><i>2</i><span>Друг заходит по ней и оплачивает любой тариф</span></div>
+<div class="step"><i>3</i><span>Тебе +3 дня к подписке</span></div>
+</div>
+</section>
+
+</main>
+
+<nav><div><span class="pill"><i></i></span>
+<a href="#subs" data-tab="subs"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M3 10h18"/></svg>Подписки</a>
+<a href="#status" data-tab="status"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.2 7.5-8 9-4.8-1.5-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Статус</a>
+<a href="#account" data-tab="account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>Аккаунт</a>
+<a href="#ref" data-tab="ref"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.2-5 6.5-5s5.7 1.5 6.5 5"/><path d="M18 8v6M15 11h6"/></svg>Реф</a>
+</div></nav>
+
+<div class="sheet" id="login-sheet" role="dialog" aria-modal="true" aria-labelledby="ls-title">
+<div style="text-align:center">
+<div data-ghost></div>
+<h2 id="ls-title">Сначала войди</h2>
+<p class="muted" style="margin:0 0 18px">Чтобы оплатить, нужен аккаунт Telegram.</p>
+<div data-login></div>
+<button class="ghostb" style="margin-top:10px" id="ls-cancel">Отмена</button>
+</div>
+</div>
+
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sh-title">
+<div>
+<h2 id="sh-title">Оплата</h2>
+<div class="muted" id="sh-sub"></div>
+<div class="methods">
+<label><input type="radio" name="m" value="card" checked> Банковская карта</label>
+<label><input type="radio" name="m" value="sbp"> СБП</label>
+</div>
+<button id="sh-pay">Оплатить</button>
+<button class="ghostb" style="margin-top:10px" id="sh-cancel">Отмена</button>
+<p class="muted" id="sh-demo" style="margin:14px 0 0">Демо-режим: деньги не списываются, сервер оплаты не подключён.</p>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ НАСТРОЙКИ ============
+ API  — адрес твоего сервера. Пока пусто = демо-режим (всё хранится в браузере).
+ BOT  — username бота БЕЗ @. Для настоящего входа в BotFather выполни /setdomain и укажи домен сайта (нужен https).
+
+ Что должен уметь сервер (когда дойдёшь до него):
+  POST /auth/telegram  тело = данные виджета Telegram → проверить hash (HMAC-SHA256 от токена бота)
+                       → {token, user:{id,name,username}, sub, key, pays, invited, bonus}
+  GET  /me             заголовок Authorization: Bearer <token> → те же поля (чтобы не входить заново)
+  POST /auth/webapp    {initData, ref} — вход, когда сайт открыт как мини-приложение внутри Telegram
+                       → проверить initData (HMAC с ключом от "WebAppData") → те же поля, что у /auth/telegram
+  POST /pay            {plan, method, ref} → {url} ссылка на оплату (ЮKassa / СБП и т.п.)
+  Подписку и +3 дня рефереру начисляет сервер по вебхуку оплаты, не сайт.
+*/
+const API = "";
+const BOT = "TechTokVpnBot";
+const REF_BONUS_DAYS = 3;
+const PLANS = {day:{name:"На день",price:10,days:1}, month:{name:"На месяц",price:50,days:30}};
+const KEY = "ttvpn2";
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+/* ---------- состояние ---------- */
+function load(){
+  try{ const s = JSON.parse(localStorage.getItem(KEY)); if(s && s.uid) return s; }catch(e){}
+  return {uid:"u"+Math.random().toString(36).slice(2,9), user:null, token:null, sub:null, key:null, pays:[], invited:0, bonus:0, refGen:false, ref:null};
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+let S = load(); save();
+const myId = () => (S.user && S.user.id) ? S.user.id : S.uid;
+
+/* ---------- приведение ---------- */
+const GHOST = '<svg class="ghost" viewBox="490 510 950 920" aria-hidden="true"><path d="M965 521C1150 521 1290 650 1327 944C1360 985 1427 1030 1427 1077C1427 1105 1405 1122 1380 1122C1360 1122 1345 1117 1327 1110C1315 1290 1260 1411 1170 1411C1100 1411 1030 1372 965 1372C900 1372 830 1411 765 1411C670 1411 615 1290 606 1110C588 1117 573 1122 553 1122C528 1122 503 1105 503 1077C503 1030 570 985 606 944C643 650 780 521 965 521Z"/><g class="eyes"><ellipse class="eye" cx="831" cy="875" rx="76" ry="118"/><ellipse class="eye" cx="1100" cy="875" rx="76" ry="118"/></g></svg>';
+$$("[data-ghost]").forEach(el => { el.innerHTML = GHOST; });
+
+// глаза следят за пальцем/курсором (лёгко: только transform, через rAF)
+let eyeRaf = 0, px = 0, py = 0;
+function eyes(){
+  eyeRaf = 0;
+  $$(".ghost").forEach(g => {
+    const r = g.getBoundingClientRect();
+    const dx = px - (r.left + r.width/2), dy = py - (r.top + r.height/2);
+    const d = Math.hypot(dx, dy) || 1, k = Math.min(1, d/220) * 16;
+    g.style.setProperty("--ex", (dx/d*k).toFixed(1) + "px");
+    g.style.setProperty("--ey", (dy/d*k*.7).toFixed(1) + "px");
+  });
+}
+addEventListener("pointermove", e => { px = e.clientX; py = e.clientY; if(!eyeRaf) eyeRaf = requestAnimationFrame(eyes); }, {passive:true});
+
+/* ---------- заставка ---------- */
+(function(){
+  const sp = $("#splash");
+  let seen = false; try{ seen = sessionStorage.getItem("ttsplash"); }catch(e){}
+  if(seen){ sp.remove(); return; }
+  [..."TechTok VPN"].forEach((c,k) => { const s = document.createElement("span"); s.textContent = c === " " ? "\u00a0" : c; s.style.setProperty("--k", k); $("#splash-t").append(s); });
+  const out = () => { sp.classList.add("out"); setTimeout(() => sp.remove(), 700); };
+  const t = setTimeout(out, 2300);
+  sp.onclick = () => { clearTimeout(t); out(); };
+  try{ sessionStorage.setItem("ttsplash", "1"); }catch(e){}
+})();
+
+/* ---------- утилиты ---------- */
+function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("show"),2000); }
+const fmt = ts => new Date(ts).toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"});
+function countTo(el, n){
+  const from = +el.dataset.v || 0; el.dataset.v = n;
+  if(from === n){ el.textContent = n; return; }
+  const t0 = performance.now(), dur = 700;
+  (function step(t){ const p = Math.min(1,(t-t0)/dur); el.textContent = Math.round(from + (n-from)*(1-Math.pow(1-p,3))); if(p<1) requestAnimationFrame(step); })(t0);
+}
+function confetti(x, y){
+  if(matchMedia("(prefers-reduced-motion:reduce)").matches) return;
+  const cols = ["#fff","#5fe08a","#7aa7ff","#ffd166","#aaa"];
+  for(let i=0;i<26;i++){
+    const d = document.createElement("i"); d.className = "conf";
+    d.style.cssText = "left:"+x+"px;top:"+y+"px;background:"+cols[i%cols.length];
+    document.body.append(d);
+    const a = Math.random()*Math.PI*2, v = 90 + Math.random()*140;
+    d.animate([{transform:"translate(0,0) rotate(0)",opacity:1},{transform:"translate("+Math.cos(a)*v+"px,"+(Math.sin(a)*v+90)+"px) rotate("+(Math.random()*540)+"deg)",opacity:0}],{duration:900+Math.random()*500,easing:"cubic-bezier(.2,.7,.3,1)"}).onfinish = () => d.remove();
+  }
+}
+
+/* ---------- навигация ---------- */
+const TABS = ["subs","status","account","ref"];
+function go(tab){ if(location.hash.slice(1) === tab) route(); else location.hash = tab; }
+function fit(){
+  const st = document.documentElement.style;
+  st.setProperty("--hh", $("header").offsetHeight + "px");
+  st.setProperty("--nh", $("nav").offsetHeight + "px");
+}
+addEventListener("resize", fit);
+function route(){
+  const h = location.hash.slice(1), t = TABS.includes(h) ? h : "subs", i = TABS.indexOf(t);
+  $(".pill").style.transform = "translateX(" + (i*100) + "%)";
+  $$("section").forEach(s => s.classList.toggle("on", s.id === t));
+  $$("nav a").forEach(a => a.classList.toggle("on", a.dataset.tab === t));
+  $("#view").scrollTop = 0;
+  render();
+}
+addEventListener("hashchange", route);
+
+/* ---------- отрисовка ---------- */
+function render(){
+  const sub = S.sub, now = Date.now(), active = !!(sub && sub.until > now);
+  $("#sdot").className = "dot" + (active ? " on-dot" : "");
+  $("#stext").textContent = active ? "Подписка активна" : (sub ? "Подписка закончилась" : "Нет подписки");
+  $("#splan").textContent = sub ? PLANS[sub.plan].name : "—";
+  $("#suntil").textContent = sub ? fmt(sub.until) : "—";
+  if(active){
+    const left = sub.until - now, total = sub.until - sub.from;
+    $("#sbar").style.setProperty("--p", Math.max(.02, left/total));
+    const d = Math.floor(left/864e5), h = Math.floor(left%864e5/36e5), m = Math.floor(left%36e5/6e4);
+    $("#sleft").textContent = "Осталось: " + (d ? d+" дн. " : "") + h + " ч. " + m + " мин.";
+  } else {
+    $("#sbar").style.setProperty("--p", 0);
+    $("#sleft").textContent = sub ? "Оформи новую подписку." : "Оформи подписку, чтобы подключиться.";
+  }
+  $("#renew").textContent = active ? "Продлить" : "Оформить подписку";
+  $("#keybox").hidden = !(active && S.key);
+  $("#keyval").textContent = S.key || "";
+
+  const u = S.user;
+  $("#acc-out").hidden = !!u; $("#acc-in").hidden = !u; $("#logout").hidden = !u;
+  if(u){ $("#uname").textContent = u.name || "—"; $("#utg").textContent = u.username ? "@"+u.username : "—"; $("#uid").textContent = u.id; }
+
+  $("#gen").hidden = S.refGen; $("#refbox").hidden = !S.refGen;
+  $("#reflink").textContent = location.origin + location.pathname + "?ref=" + myId();
+  countTo($("#rinv"), S.invited); countTo($("#rbonus"), S.bonus);
+
+  const list = $("#pay-list"); list.textContent = "";
+  if(!S.pays.length){ const m = document.createElement("div"); m.className = "muted"; m.textContent = "Платежей пока нет."; list.append(m); }
+  S.pays.slice().reverse().forEach(p => {
+    const r = document.createElement("div"); r.className = "row";
+    const a = document.createElement("span"); a.textContent = PLANS[p.plan].name + " · " + fmt(p.at);
+    const b = document.createElement("span"); b.textContent = p.price + " ₽";
+    r.append(a,b); list.append(r);
+  });
+}
+
+/* ---------- вход через Telegram ---------- */
+const TG_ICON = '<svg viewBox="0 0 24 24"><path d="M9.8 15.6l-.4 4c.5 0 .8-.2 1.1-.5l2.6-2.5 5.400 4c1 .5 1.700.3 2-.9l3.600-16.900c.3-1.500-.5-2-1.500-1.700L1.400 10.400c-1.400.6-1.400 1.400-.3 1.700l5.400 1.700L19 6.200c.6-.4 1.200-.2.700.2z"/></svg>';
+function mountLogin(){
+  $$("[data-login]").forEach(box => {
+    box.textContent = "";
+    if(API){
+      const s = document.createElement("script");
+      s.async = true; s.src = "https://telegram.org/js/telegram-widget.js?22";
+      s.setAttribute("data-telegram-login", BOT); s.setAttribute("data-size","large");
+      s.setAttribute("data-radius","14"); s.setAttribute("data-request-access","write");
+      s.setAttribute("data-onauth","onTelegramAuth(user)");
+      box.append(s);
+    } else {
+      const b = document.createElement("button"); b.className = "tg-btn";
+      b.innerHTML = TG_ICON + "<span>Войти через Telegram</span>";
+      b.onclick = demoLogin; box.append(b);
+    }
+  });
+}
+function demoLogin(){
+  S.user = {id: String(100000000 + Math.floor(Math.random()*899999999)), name:"Демо-пользователь", username:"demo_user"};
+  S.token = "demo"; save(); afterLogin();
+}
+window.onTelegramAuth = async u => {
+  try{
+    const r = await fetch(API + "/auth/telegram", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({...u, ref:S.ref||null})});
+    if(!r.ok) throw 0;
+    applyServer(await r.json()); afterLogin();
+  }catch(e){ toast("Не получилось войти. Попробуй ещё раз."); }
+};
+function applyServer(d){
+  if(d.token) S.token = d.token;
+  if(d.user) S.user = d.user;
+  ["sub","key","pays","invited","bonus"].forEach(k => { if(d[k] !== undefined) S[k] = d[k]; });
+  save();
+}
+function afterLogin(){
+  closeSheet(lsheet); render();
+  toast("Ты вошёл" + (S.user.username ? " как @"+S.user.username : ""));
+  if(pending){ const p = pending; pending = null; setTimeout(() => openPay(p), 350); }
+}
+function logout(){ S.user = null; S.token = null; S.sub = null; S.key = null; S.pays = []; S.invited = 0; S.bonus = 0; S.refGen = false; save(); render(); toast("Ты вышел"); }
+// при заходе: если уже входил — тихо подтягиваем данные с сервера, вводить ничего не надо
+async function sync(){
+  if(!API || !S.token) return;
+  try{
+    const r = await fetch(API + "/me", {headers:{Authorization:"Bearer "+S.token}});
+    if(r.status === 401){ logout(); return; }
+    if(r.ok){ applyServer(await r.json()); render(); }
+  }catch(e){}
+}
+
+/* ---------- окна ---------- */
+const lsheet = $("#login-sheet"), psheet = $("#sheet");
+function openSheet(el){ el.classList.add("open"); }
+function closeSheet(el){ el.classList.remove("open"); }
+let pending = null;
+function buy(plan){
+  if(!S.user){ pending = plan; openSheet(lsheet); return; }
+  openPay(plan);
+}
+function openPay(plan){
+  pending = plan;
+  $("#sh-sub").textContent = PLANS[plan].name + " · " + PLANS[plan].price + " ₽";
+  $("#sh-pay").textContent = "Оплатить " + PLANS[plan].price + " ₽";
+  $("#sh-demo").hidden = !!API;
+  openSheet(psheet);
+}
+function closeAll(){ closeSheet(lsheet); closeSheet(psheet); pending = null; }
+
+async function pay(e){
+  const plan = pending, method = document.querySelector("input[name=m]:checked").value;
+  const btn = $("#sh-pay"); btn.disabled = true;
+  try{
+    if(API){
+      const r = await fetch(API + "/pay", {method:"POST", headers:{"Content-Type":"application/json", Authorization:"Bearer "+S.token}, body:JSON.stringify({plan, method, ref:S.ref||null})});
+      const d = await r.json();
+      if(d.url){ location.href = d.url; return; }
+      throw new Error("no url");
+    }
+    const P = PLANS[plan], now = Date.now();
+    const base = S.sub && S.sub.until > now ? S.sub.until : now;
+    S.sub = {plan, from: now, until: base + P.days*864e5};
+    S.key = S.key || "vless://demo-" + myId() + "@vpn.example:443";
+    S.pays.push({plan, price:P.price, at:now});
+    save(); closeSheet(psheet); pending = null; go("status"); render();
+    toast("Подписка оформлена");
+    confetti(innerWidth/2, innerHeight*.45);
+  }catch(err){
+    toast("Не получилось оплатить. Попробуй ещё раз.");
+  }finally{ btn.disabled = false; }
+}
+
+/* ---------- события ---------- */
+document.addEventListener("click", async e => {
+  const p = e.target.closest("[data-plan]"); if(p) buy(p.dataset.plan);
+  const c = e.target.closest("[data-copy]");
+  if(c){
+    try{ await navigator.clipboard.writeText(document.getElementById(c.dataset.copy).textContent); toast("Скопировано"); }
+    catch(err){ toast("Не удалось скопировать"); }
+  }
+});
+$("#sh-pay").onclick = pay;
+$("#sh-cancel").onclick = closeAll;
+$("#ls-cancel").onclick = closeAll;
+[lsheet, psheet].forEach(s => s.addEventListener("click", e => { if(e.target === s) closeAll(); }));
+addEventListener("keydown", e => { if(e.key === "Escape") closeAll(); });
+$("#renew").onclick = () => go("subs");
+$("#logout").onclick = logout;
+
+$("#gen").onclick = e => {
+  const b = e.currentTarget; b.disabled = true;
+  b.innerHTML = 'Создаю ссылку<span class="dots"></span>';
+  setTimeout(() => {
+    S.refGen = true; save(); b.disabled = false; b.textContent = "Сгенерировать ссылку";
+    render();
+    const box = $("#refbox"); box.classList.remove("reveal"); void box.offsetWidth; box.classList.add("reveal");
+    const r = box.getBoundingClientRect(); confetti(r.left + r.width/2, r.top);
+  }, 900);
+};
+$("#share").onclick = async () => {
+  const url = $("#reflink").textContent, text = "Бери VPN за 10 ₽ в день — TechTok VPN";
+  if(navigator.share){ try{ await navigator.share({title:"TechTok VPN", text, url}); }catch(e){} }
+  else location.href = "https://t.me/share/url?url=" + encodeURIComponent(url) + "&text=" + encodeURIComponent(text);
+};
+
+// пришли по чьей-то реф-ссылке — запоминаем, кто пригласил
+try{ const r = new URLSearchParams(location.search).get("ref"); if(r && r !== myId() && !S.ref){ S.ref = r; save(); } }catch(e){}
+
+/* ---------- приятные мелочи ---------- */
+// свайп влево/вправо переключает вкладки
+(function(){
+  let tx = 0, ty = 0, tt = 0; const v = $("#view");
+  v.addEventListener("touchstart", e => { const t = e.touches[0]; tx = t.clientX; ty = t.clientY; tt = Date.now(); }, {passive:true});
+  v.addEventListener("touchend", e => {
+    const t = e.changedTouches[0], dx = t.clientX - tx, dy = t.clientY - ty;
+    if(Date.now() - tt > 600 || Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy)*1.6) return;
+    const i = Math.max(0, TABS.indexOf(location.hash.slice(1))), n = i + (dx < 0 ? 1 : -1);
+    if(n >= 0 && n < TABS.length) go(TABS[n]);
+  }, {passive:true});
+})();
+// лёгкая вибрация на кнопках и подпрыгивание приведения по тапу
+document.addEventListener("click", e => {
+  if(e.target.closest("button,.btn,nav a") && navigator.vibrate) navigator.vibrate(8);
+  const g = e.target.closest(".ghost");
+  if(g){ g.classList.remove("hop"); void g.getBoundingClientRect(); g.classList.add("hop"); g.addEventListener("animationend", () => g.classList.remove("hop"), {once:true}); }
+});
+// если сайт открыт внутри Telegram (мини-приложение) — входим сами, без кнопок
+(async function(){
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if(!tg || !tg.initData) return;
+  try{ tg.ready(); tg.expand(); }catch(e){}
+  const sp = tg.initDataUnsafe && tg.initDataUnsafe.start_param;
+  if(sp && sp.indexOf("ref_") === 0 && !S.ref){ S.ref = sp.slice(4); save(); }
+  if(S.user) return;
+  if(API){
+    try{
+      const r = await fetch(API + "/auth/webapp", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({initData:tg.initData, ref:S.ref||null})});
+      if(r.ok){ applyServer(await r.json()); render(); toast("Ты вошёл"); }
+    }catch(e){}
+  } else if(tg.initDataUnsafe && tg.initDataUnsafe.user){
+    const u = tg.initDataUnsafe.user;
+    S.user = {id:String(u.id), name:[u.first_name,u.last_name].filter(Boolean).join(" "), username:u.username||""};
+    S.token = "demo"; save(); render();
+  }
+})();
+
+mountLogin(); fit(); route(); sync();
+setInterval(render, 30000);
+</script>
+</body>
+</html>
